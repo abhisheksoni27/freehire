@@ -899,3 +899,46 @@ describe('workModeRemoteAnywhere', () => {
     expect(activeFilterCount(inert) - activeFilterCount({ ...inert, workModeRemoteAnywhere: false })).toBe(0);
   });
 });
+
+describe('minMatch ("Minimum skill match")', () => {
+  it('is absent from URL when null', () => {
+    const p = filtersToParams(emptyFilters());
+    expect(p.has('min_match')).toBe(false);
+  });
+
+  it('serializes min_match and reads it back', () => {
+    const f = { ...emptyFilters(), minMatch: 70 };
+    const p = filtersToParams(f);
+    expect(p.get('min_match')).toBe('70');
+    const parsed = filtersFromParams(p);
+    expect(parsed.minMatch).toBe(70);
+  });
+
+  it('serializes 0 bound as 0 and reads it back', () => {
+    const f = { ...emptyFilters(), minMatch: 0 };
+    const p = filtersToParams(f);
+    expect(p.get('min_match')).toBe('0');
+    const parsed = filtersFromParams(p);
+    expect(parsed.minMatch).toBe(0);
+  });
+
+  it('reads invalid, out-of-bounds, or negative numbers as null', () => {
+    expect(filtersFromParams(new URLSearchParams('min_match=-5')).minMatch).toBeNull();
+    expect(filtersFromParams(new URLSearchParams('min_match=105')).minMatch).toBeNull();
+    expect(filtersFromParams(new URLSearchParams('min_match=abc')).minMatch).toBeNull();
+    expect(filtersFromParams(new URLSearchParams('min_match=')).minMatch).toBeNull();
+  });
+
+  it('counts as an active filter when set', () => {
+    expect(activeFilterCount({ ...emptyFilters(), minMatch: 50 })).toBe(1);
+    expect(activeFilterCount({ ...emptyFilters(), minMatch: null })).toBe(0);
+  });
+
+  it('is preserved in savedSearchQuery and canonicalQuery', () => {
+    const f = { ...emptyFilters(), minMatch: 70 };
+    const saved = savedSearchQuery(f);
+    expect(new URLSearchParams(saved).get('min_match')).toBe('70');
+    expect(canonicalQuery('min_match=70&q=go')).toBe(canonicalQuery('q=go&min_match=70'));
+    expect(new URLSearchParams(canonicalQuery('min_match=70')).get('min_match')).toBe('70');
+  });
+});

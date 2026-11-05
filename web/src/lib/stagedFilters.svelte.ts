@@ -136,6 +136,10 @@ export class StagedFilters implements FacetStore {
     this.#f = { ...this.#f, workModeRemoteAnywhere: on, ...(on ? {} : { workModeRemoteRegions: [], workModeRemoteCountries: [] }) };
   }
 
+  setMinMatch(n: number | null): void {
+    this.#f = { ...this.#f, minMatch: n };
+  }
+
   /** Reset every staged filter. */
   clear(): void {
     this.#f = emptyFilters();

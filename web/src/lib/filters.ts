@@ -115,6 +115,10 @@ export class FilterStore {
     this.#url.setNow({ ...this.#url.value, openWithinDays: n });
   }
 
+  setMinMatch(n: number | null) {
+    this.#url.setNow({ ...this.#url.value, minMatch: n });
+  }
+
   setExperienceYearsMax(n: number | null) {
     this.#url.setSoon({ ...this.#url.value, experienceYearsMax: n });
   }

@@ -200,10 +200,9 @@
   // Minimum profile-match slider: a client-only post-filter over the already-fetched
   // page, not a search facet — the match percent depends on the viewer's own profile
   // skills, which the backend/index never sees, so there's nothing to send server-side
-  // (unlike salary/freshness, which narrow the actual query). Local and URL-free: a
-  // shared link's match filter would mean nothing to whoever opens it. `null` means
+  // (unlike salary/freshness, which narrow the actual query). `null` means
   // "no threshold" (the slider's own default position doubles as "off").
-  let minMatch = $state<number | null>(null);
+  let minMatch = $derived.by(() => filters.value.minMatch);
 
   // Only a signed-in user with skills on their profile has a real match percent per
   // card (see resolveMatchState's `ready` state in JobRow) — everyone else sees a
@@ -219,7 +218,7 @@
   // Drop a stale threshold the moment the slider would disappear (sign-out, profile
   // cleared) so it can't silently keep hiding jobs with no control left to reset it.
   $effect(() => {
-    if (!matchFilterAvailable) minMatch = null;
+    if (!matchFilterAvailable && filters.value.minMatch !== null) filters.setMinMatch(null);
   });
 
   // The orderings this caller can choose between, and which one the control shows —
@@ -1019,6 +1018,6 @@
   onClose={() => (modalOpen = false)}
   {stagedCounts}
   matchAvailable={matchFilterAvailable}
-  {minMatch}
-  onMinMatchChange={(v) => (minMatch = v)}
+  minMatch={filters.value.minMatch}
+  onMinMatchChange={(v) => filters.setMinMatch(v)}
 />

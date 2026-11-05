@@ -154,6 +154,10 @@ export interface JobFilters {
    *  modifier clears them. */
   workModeRemoteRegions: string[];
   workModeRemoteCountries: string[];
+  /** Minimum skill match percent (0..100) or null for any match.
+   *  Serialized as `min_match`. Evaluated client-side against the viewer's profile skills.
+   *  Preserved in saved search presets. */
+  minMatch: number | null;
 }
 
 /** Strips a title suggestion's Meilisearch quoting wrapper (see `apiSuggestions.ts`'s
@@ -310,6 +314,7 @@ export function emptyFilters(): JobFilters {
     workModeRemoteAnywhere: false,
     workModeRemoteRegions: [],
     workModeRemoteCountries: [],
+    minMatch: null,
   };
 }
 
@@ -358,6 +363,7 @@ export function filtersToParams(f: JobFilters): URLSearchParams {
     if (f.workModeRemoteRegions.length) p.set('work_mode_remote_regions', f.workModeRemoteRegions.join(','));
     if (f.workModeRemoteCountries.length) p.set('work_mode_remote_countries', f.workModeRemoteCountries.join(','));
   }
+  if (f.minMatch != null) p.set('min_match', String(f.minMatch));
   return p;
 }
 
@@ -463,6 +469,8 @@ export function filtersFromParams(p: URLSearchParams): JobFilters {
     f.workModeRemoteRegions = list('work_mode_remote_regions');
     f.workModeRemoteCountries = list('work_mode_remote_countries');
   }
+  const minMatch = nonNegativeInt(p.get('min_match'));
+  f.minMatch = minMatch !== null && minMatch <= 100 ? minMatch : null;
   return f;
 }
 
@@ -541,6 +549,7 @@ export function activeFilterCount(f: JobFilters): number {
   if (f.postedWithinDays != null) n += 1;
   if (f.openWithinDays != null) n += 1;
   if (f.experienceYearsMax != null) n += 1;
+  if (f.minMatch != null) n += 1;
   // The modifier counts only when it changes the answer — off or inert, it narrows
   // nothing and a badge for it would lie.
   if (f.workModeRemoteAnywhere && appliesWorkModeRemoteAnywhere(f)) n += 1;

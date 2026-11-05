@@ -216,7 +216,7 @@
       );
     // The Minimum skill match threshold lives at the top of the Skills pane, so it
     // counts toward that tab's badge alongside the skills facet selections.
-    if (e.key === 'skills') return selCount(f, 'skills') + (matchAvailable && draftMinMatch != null ? 1 : 0);
+    if (e.key === 'skills') return selCount(f, 'skills') + (matchAvailable && staged.value.minMatch != null ? 1 : 0);
     if (e.key === 'company_slug') return selCount(f, 'company_slug') + (showFormerEmployers && f.formerEmployers ? 1 : 0);
     if (e.key === 'source') return selCount(f, 'source_type') + selCount(f, 'source');
     return selCount(f, e.facetParam ?? e.key);
@@ -232,18 +232,17 @@
   }
 
   // The minimum skill match is staged like everything else in this modal: dragging the
-  // slider moves this draft, Apply hands it to the caller, closing without Apply drops
-  // it, and Clear all resets it. It lives here rather than in StagedFilters because it
-  // is not a JobFilters field (see the `minMatch` prop).
-  let draftMinMatch = $state<number | null>(null);
-
+  // slider updates staged.minMatch, Apply hands it to the caller, closing without Apply drops
+  // it, and Clear all resets it.
   function seedStaged() {
     staged.seed(seed ?? store?.value ?? emptyFilters());
-    draftMinMatch = minMatch;
+    if (minMatch !== undefined) {
+      staged.setMinMatch(minMatch);
+    }
   }
 
   function clearDrafts() {
-    draftMinMatch = null;
+    staged.setMinMatch(null);
   }
 
   async function apply() {
@@ -252,7 +251,7 @@
     } else if (store) {
       staged.commit(store);
     }
-    if (matchAvailable && draftMinMatch !== minMatch) onMinMatchChange?.(draftMinMatch);
+    if (matchAvailable && staged.value.minMatch !== minMatch) onMinMatchChange?.(staged.value.minMatch);
   }
 
   const applyDisabled = $derived(canApply ? !canApply(staged.value) : false);
@@ -622,21 +621,21 @@
     {/if}
     {#if entry.key === 'skills' && matchAvailable}
       <!-- Client-only post-filter (see `minMatch`/`onMinMatchChange` props), staged in
-           `draftMinMatch` until Apply like every other control here. It narrows the
+           `staged.value.minMatch` until Apply like every other control here. It narrows the
            fetched page in memory, so the footer's server-side count does not move with it. -->
       <div class="mb-2 flex items-center justify-between">
         <h3 class="text-sm font-semibold tracking-tight">Minimum skill match</h3>
-        <span class="text-xs font-medium text-muted-foreground">{draftMinMatch != null ? `${draftMinMatch}%+` : 'Any'}</span>
+        <span class="text-xs font-medium text-muted-foreground">{staged.value.minMatch != null ? `${staged.value.minMatch}%+` : 'Any'}</span>
       </div>
       <input
         type="range"
         min="0"
         max="100"
         step="5"
-        value={draftMinMatch ?? 0}
-        oninput={(e) => (draftMinMatch = Number(e.currentTarget.value) || null)}
+        value={staged.value.minMatch ?? 0}
+        oninput={(e) => staged.setMinMatch(Number(e.currentTarget.value) || null)}
         aria-label="Minimum skill match"
-        aria-valuetext={draftMinMatch != null ? `${draftMinMatch}% or more` : 'Any'}
+        aria-valuetext={staged.value.minMatch != null ? `${staged.value.minMatch}% or more` : 'Any'}
         class="mb-6 h-6 w-full accent-primary"
       />
     {/if}
